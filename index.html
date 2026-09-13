@@ -794,8 +794,8 @@ const clock = new THREE.Clock();
 let snapReady = true;
 
 renderer.setAnimationLoop(()=>{
-  const t = clock.getElapsedTime();
-  const dt = Math.min(clock.getDelta(), 0.05) || 0.016;
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
 
   if(state.started && !state.done){
     // idle motion for grabbables + proximity glow
