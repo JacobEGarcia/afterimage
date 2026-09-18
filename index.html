@@ -1019,6 +1019,9 @@ function roomComplete(){
 function finishGame(){
   state.done = true;
   clearRoom();
+  elRoomNum.textContent = '';
+  elRoomName.textContent = '';
+  elTimer.textContent = fmtTime(performance.now()-state.t0);
   const kinds = ['sofa','dance','read'];
   kinds.forEach((k,i)=>{
     const g = new THREE.Group();
