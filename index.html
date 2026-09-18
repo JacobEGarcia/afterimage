@@ -3,46 +3,115 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="description" content="AFTERIMAGE - a wireframe VR memory game. Put the rooms back together and they remember.">
+<meta name="theme-color" content="#000000">
 <title>AFTERIMAGE</title>
 <style>
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#cfd8dc;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#cfd8dc;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 canvas{display:block}
-#ui{position:fixed;inset:0;pointer-events:none}
-#brand{position:absolute;top:28px;left:32px;font-weight:700;font-size:15px;letter-spacing:.42em;color:#e8e6df}
-#brand b{color:#f59e0b}
-#sub{position:absolute;top:60px;left:32px;font-size:10px;letter-spacing:.22em;color:#5b6470}
-#hint{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);font-size:11px;letter-spacing:.2em;color:#8b93a0;opacity:0;transition:opacity .4s}
-#cross{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border:1px solid #4b5563;border-radius:50%;opacity:.6}
-#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity 1.1s}
-#title{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.96);pointer-events:all;transition:opacity .8s}
-#title.hidden{opacity:0;pointer-events:none}
-#tcard{text-align:center;border:1px solid #1f2937;padding:48px 64px;background:#020304}
-#tcard h1{font-size:44px;letter-spacing:.34em;margin:0 0 8px;color:#e8e6df;font-weight:700}
-#tcard h1 b{color:#f59e0b}
-#tcard p{color:#5b6470;font-size:12px;letter-spacing:.2em;margin:6px 0}
-#tcard .go{margin-top:24px;display:inline-block;border:1px solid #374151;padding:12px 34px;letter-spacing:.3em;font-size:13px;color:#e8e6df;cursor:pointer}
-#tcard .go:hover{border-color:#f59e0b;color:#f59e0b}
-#vrslot{margin-top:14px}
-#vrslot button{position:static!important;font-family:inherit!important;letter-spacing:.3em!important;font-size:12px!important;border:1px solid #374151!important;background:none!important;color:#8b93a0!important;padding:10px 26px!important;border-radius:0!important;opacity:1!important}
+b{font-weight:inherit;color:#fbbf24}
+#ui{position:fixed;inset:0;pointer-events:none;z-index:5}
+
+/* ---------- HUD ---------- */
+#brand{position:absolute;top:22px;left:26px;font-weight:700;font-size:12px;letter-spacing:.42em;color:#e8e6df;opacity:.85}
+#brand b{color:#fbbf24}
+#timer{position:absolute;top:22px;right:26px;font-size:12px;letter-spacing:.3em;color:#8b93a0;font-variant-numeric:tabular-nums}
+#roomtag{position:absolute;top:20px;left:50%;transform:translateX(-50%);text-align:center}
+#roomtag .num{font-size:10px;letter-spacing:.34em;color:#5b6470}
+#roomtag .name{font-size:13px;letter-spacing:.34em;color:#22d3ee;margin-top:4px}
+#pips{position:absolute;top:58px;left:50%;transform:translateX(-50%);display:flex;gap:10px}
+#pips span{width:7px;height:7px;border:1px solid #4b5563;transform:rotate(45deg);transition:all .35s}
+#pips span.on{background:#fbbf24;border-color:#fbbf24;box-shadow:0 0 10px #fbbf24aa}
+#hint{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);font-size:11px;letter-spacing:.2em;
+  color:#8b93a0;opacity:0;transition:opacity .4s;text-align:center;line-height:1.9;max-width:92vw;white-space:pre-line}
+#cross{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;border:1px solid #4b5563;border-radius:50%;opacity:.55;transition:all .15s}
+#cross.hot{border-color:#fbbf24;box-shadow:0 0 8px #fbbf24;opacity:1;transform:scale(1.35)}
+#stick{position:absolute;left:34px;bottom:34px;width:104px;height:104px;border:1px solid #374151;border-radius:50%;display:none}
+#stick .nub{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px;border:1px solid #8b93a0;border-radius:50%}
+body.touch #stick{display:block}
+
+/* ---------- banner ---------- */
+#banner{position:fixed;left:0;right:0;top:38%;text-align:center;pointer-events:none;opacity:0;transition:opacity .9s;z-index:6}
+#banner .big{font-size:clamp(18px,3.4vw,30px);letter-spacing:.4em;color:#e8e6df;text-shadow:0 0 24px #fbbf2455}
+#banner .big b{text-shadow:0 0 24px #fbbf24aa}
+#banner .small{margin-top:12px;font-size:11px;letter-spacing:.3em;color:#8b93a0}
+
+/* ---------- fade ---------- */
+#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity 1.1s;z-index:8}
+
+/* ---------- title / end screens ---------- */
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 42%,rgba(20,26,34,.55),rgba(0,0,0,.97) 70%),#000;
+  pointer-events:all;transition:opacity .8s;z-index:10}
+.screen.hidden{opacity:0;pointer-events:none}
+.card{text-align:center;padding:44px 40px;max-width:640px}
+.over{font-size:10px;letter-spacing:.5em;color:#5b6470;margin-bottom:22px}
+.card h1{font-size:clamp(30px,6vw,52px);letter-spacing:.32em;margin:0;color:#e8e6df;font-weight:700;text-indent:.32em}
+.card h1 b{color:#fbbf24;text-shadow:0 0 30px #fbbf2466}
+.rule{width:64px;height:1px;background:#374151;margin:26px auto}
+.premise{color:#8b93a0;font-size:12px;letter-spacing:.18em;line-height:2.1;margin:0 0 8px}
+.controls{display:flex;gap:36px;justify-content:center;margin:26px 0 6px;text-align:left}
+.controls div{font-size:10px;letter-spacing:.16em;color:#5b6470;line-height:2.1}
+.controls b{display:block;color:#8b93a0;letter-spacing:.3em;margin-bottom:6px}
+.go{margin-top:30px;display:inline-block;border:1px solid #4b5563;padding:14px 42px;letter-spacing:.34em;
+  font-size:12px;color:#e8e6df;cursor:pointer;transition:all .25s;text-indent:.34em}
+.go:hover{border-color:#fbbf24;color:#fbbf24;box-shadow:0 0 22px #fbbf2433,inset 0 0 14px #fbbf2414}
+#vrslot{margin-top:18px;min-height:20px}
+#vrslot button{position:static!important;transform:none!important;border:1px solid #374151!important;background:transparent!important;
+  color:#8b93a0!important;font-family:inherit!important;font-size:10px!important;letter-spacing:.3em!important;
+  padding:10px 22px!important;border-radius:0!important;cursor:pointer}
+#vrslot button:hover{border-color:#22d3ee!important;color:#22d3ee!important}
+.stats{display:flex;gap:44px;justify-content:center;margin:26px 0 4px}
+.stats div{text-align:center}
+.stats .v{font-size:26px;color:#fbbf24;letter-spacing:.1em;font-variant-numeric:tabular-nums}
+.stats .k{font-size:9px;letter-spacing:.3em;color:#5b6470;margin-top:6px}
+@media (max-width:560px){.controls{flex-direction:column;gap:10px;text-align:center}.card{padding:30px 20px}}
 </style>
 </head>
 <body>
 <div id="ui">
   <div id="brand">AFTER<b>IMAGE</b></div>
-  <div id="sub">A MEMORY IN WIREFRAME</div>
+  <div id="timer">0:00</div>
+  <div id="roomtag"><div class="num"></div><div class="name"></div></div>
+  <div id="pips"><span></span><span></span><span></span><span></span><span></span></div>
   <div id="hint"></div>
   <div id="cross"></div>
+  <div id="stick"><div class="nub"></div></div>
 </div>
+<div id="banner"><div class="big"></div><div class="small"></div></div>
 <div id="fade"></div>
-<div id="title">
-  <div id="tcard">
+
+<div class="screen" id="title">
+  <div class="card">
+    <div class="over">A MEMORY IN WIREFRAME</div>
     <h1>AFTER<b>IMAGE</b></h1>
-    <p>THE ROOMS REMEMBER. PUT THEM BACK TOGETHER.</p>
+    <div class="rule"></div>
+    <p class="premise">THREE ROOMS, EMPTIED.<br>PUT BACK WHAT BELONGS AND THE HOUSE REMEMBERS<br>WHO LIVED IN IT.</p>
+    <div class="controls">
+      <div><b>DESKTOP</b>CLICK TO LOOK<br>WASD TO MOVE<br>CLICK / E TO HOLD AND PLACE</div>
+      <div><b>QUEST 3</b>TRIGGER TO HOLD AND PLACE<br>LEFT STICK TO MOVE<br>RIGHT STICK TO TURN</div>
+    </div>
     <div class="go" id="startBtn">STEP INSIDE</div>
     <div id="vrslot"></div>
   </div>
 </div>
+
+<div class="screen hidden" id="end">
+  <div class="card">
+    <div class="over">ALL MEMORIES RESTORED</div>
+    <h1>EVERY ROOM<br>REMEMBERS <b>YOU</b></h1>
+    <div class="rule"></div>
+    <div class="stats">
+      <div><div class="v" id="endTime">0:00</div><div class="k">TIME</div></div>
+      <div><div class="v">3 / 3</div><div class="k">ROOMS</div></div>
+      <div><div class="v">15</div><div class="k">OBJECTS HOME</div></div>
+    </div>
+    <div class="go" id="againBtn">WANDER AGAIN</div>
+  </div>
+</div>
+
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from 'three';
@@ -50,11 +119,11 @@ import {VRButton} from 'three/addons/webxr/VRButton.js';
 
 // ---------- palette ----------
 const COL = {
-  room:   0x22d3ee,   // neon blue room shell
-  room2:  0x818cf8,   // secondary room violet-blue
-  gold:   0xfbbf24,   // people / grabbables (warm)
+  room:   0x22d3ee,
+  room2:  0x818cf8,
+  gold:   0xfbbf24,
   goldHot:0xffe08a,
-  pink:   0xf472b6,   // sockets / her
+  pink:   0xf472b6,
   mag:    0xec4899,
   grid:   0x0e7490,
   white:  0xe8e6df
@@ -69,14 +138,13 @@ document.getElementById('vrslot').appendChild(VRButton.createButton(renderer));
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.Fog(0x000000, 4.5, 16);
+scene.fog = new THREE.Fog(0x000000, 5, 17);
 
 const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.05, 60);
 camera.position.set(0, 1.6, 0);
 const rig = new THREE.Group();
 rig.add(camera);
 scene.add(rig);
-rig.position.set(0, 0, 0);
 
 addEventListener('resize', ()=>{
   camera.aspect = innerWidth/innerHeight;
@@ -101,6 +169,27 @@ function edge(geo, color, op, x,y,z){
   if(x!==undefined) l.position.set(x,y,z);
   l.userData.baseOp = op==null?0.85:op;
   return l;
+}
+
+// ---------- glow sprite (cheap bloom) ----------
+let glowTex = null;
+function getGlowTex(){
+  if(glowTex) return glowTex;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+  const c = cv.getContext('2d');
+  const g = c.createRadialGradient(64,64,0, 64,64,64);
+  g.addColorStop(0,'rgba(255,255,255,.85)');
+  g.addColorStop(0.35,'rgba(255,255,255,.22)');
+  g.addColorStop(1,'rgba(255,255,255,0)');
+  c.fillStyle = g; c.fillRect(0,0,128,128);
+  glowTex = new THREE.CanvasTexture(cv);
+  return glowTex;
+}
+function glow(color, size, op){
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:getGlowTex(), color,
+    transparent:true, opacity:op==null?0.5:op, blending:THREE.AdditiveBlending, depthWrite:false}));
+  sp.scale.set(size, size, 1);
+  return sp;
 }
 
 // ---------- audio ----------
@@ -136,7 +225,7 @@ function padRoot(f){
   if(!AC) return;
   padOsc.forEach((o,i)=>o.frequency.linearRampToValueAtTime(f*PAD_MULTS[i], AC.currentTime+2.5));
 }
-const ROOM_ROOTS = [55, 65.41, 49];  // A1, C2, G1
+const ROOM_ROOTS = [55, 65.41, 49];
 function tone(freq, dur, type, vol, when){
   if(!AC) return;
   const t = AC.currentTime + (when||0);
@@ -148,11 +237,12 @@ function tone(freq, dur, type, vol, when){
   o.connect(g); g.connect(AC.destination);
   o.start(t); o.stop(t+(dur||0.3)+0.05);
 }
+const sndUi    = ()=>{ tone(1400,0.05,'sine',0.035); };
 const sndGrab  = ()=>{ tone(520,0.12,'triangle',0.10); tone(780,0.1,'sine',0.05,0.02); };
 const sndPlace = ()=>{ tone(660,0.4,'sine',0.14); tone(990,0.5,'sine',0.10,0.06); tone(1320,0.6,'sine',0.06,0.12); };
 const sndFail  = ()=>{ tone(196,0.18,'triangle',0.07); };
-const sndRoom  = ()=>{ [523,659,784,1046].forEach((f,i)=>tone(f,1.2,'sine',0.10,i*0.09)); };
-const sndFinal = ()=>{ [523,659,784,1046,1318,1568].forEach((f,i)=>tone(f,1.6,'sine',0.09,i*0.12)); };
+const sndRoom  = ()=>{ [523,659,784,1046].forEach((f,i)=>tone(f,1.2,'sine',0.10,i*0.09)); tone(110,2.4,'sine',0.08,0); };
+const sndFinal = ()=>{ [523,659,784,1046,1318,1568].forEach((f,i)=>tone(f,1.6,'sine',0.09,i*0.12)); tone(110,3.2,'sine',0.09,0); };
 
 // ---------- comfort vignette (snap turns) ----------
 const vcv = document.createElement('canvas'); vcv.width = vcv.height = 512;
@@ -172,13 +262,12 @@ function comfortSnap(dirSign){
   vignT = 1;
 }
 
-// ---------- floor grid ----------
+// ---------- the void: grid, dust, stars, horizon ----------
 const grid = new THREE.GridHelper(40, 40, COL.grid, COL.grid);
 grid.material.transparent = true; grid.material.opacity = 0.22;
 grid.material.blending = THREE.AdditiveBlending; grid.material.depthWrite = false;
 scene.add(grid);
 
-// dust motes in the void
 const dustGeo = new THREE.BufferGeometry();
 {
   const n=420, pos=new Float32Array(n*3);
@@ -191,22 +280,34 @@ const dustGeo = new THREE.BufferGeometry();
 const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({color:0x2a4a5a, size:0.025, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false}));
 scene.add(dust);
 
-// faint horizon ring
+const starGeo = new THREE.BufferGeometry();
+{
+  const n=260, pos=new Float32Array(n*3);
+  for(let i=0;i<n;i++){
+    const r=22+Math.random()*18, a=Math.random()*Math.PI*2, e=Math.random()*Math.PI*0.45;
+    pos[i*3]=Math.cos(a)*Math.cos(e)*r; pos[i*3+1]=2+Math.sin(e)*r*0.6; pos[i*3+2]=Math.sin(a)*Math.cos(e)*r;
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+}
+const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({color:0x33505e, size:0.05, transparent:true, opacity:0.8, blending:THREE.AdditiveBlending, depthWrite:false}));
+scene.add(stars);
+
 const ring = edge(new THREE.TorusGeometry(9, 0.006, 6, 96), COL.room, 0.35, 0, 0.01, 0);
 ring.rotation.x = Math.PI/2;
 scene.add(ring);
 
 // ---------- text sprites ----------
-function textSprite(text, color, px){
+function textSprite(text, color, px, weight){
   px = px||44;
   const pad = 18;
   const cv = document.createElement('canvas');
   const cx = cv.getContext('2d');
-  cx.font = '700 '+px+'px ui-monospace, Menlo, monospace';
+  const font = (weight||700)+' '+px+'px ui-monospace, Menlo, monospace';
+  cx.font = font;
   const w = Math.ceil(cx.measureText(text).width)+pad*2;
   cv.width = w; cv.height = px+pad*2;
   const c = cv.getContext('2d');
-  c.font = '700 '+px+'px ui-monospace, Menlo, monospace';
+  c.font = font;
   c.textBaseline='middle';
   c.fillStyle = color||'#e8e6df';
   c.shadowColor = c.fillStyle; c.shadowBlur = 14;
@@ -223,7 +324,6 @@ function makeHand(color){
   const hand = new THREE.Group();
   const palm = wmesh(new THREE.BoxGeometry(0.075, 0.02, 0.1), color, 0.9, 0, 0, 0);
   hand.add(palm);
-  // fingers: 4 boxes + thumb, slightly fanned
   for(let i=0;i<4;i++){
     const f = wmesh(new THREE.BoxGeometry(0.014, 0.014, 0.055), color, 0.9, -0.028+i*0.019, 0.004, -0.075);
     f.rotation.x = -0.12;
@@ -232,7 +332,6 @@ function makeHand(color){
   const th = wmesh(new THREE.BoxGeometry(0.014, 0.014, 0.045), color, 0.9, 0.048, 0.0, -0.02);
   th.rotation.y = -0.6;
   hand.add(th);
-  hand.userData.mat = palm.material; // shared not; keep per mesh
   hand.traverse(o=>{ if(o.material) o.userData.baseOp = o.material.opacity; });
   return hand;
 }
@@ -255,18 +354,30 @@ for(let i=0;i<2;i++){
   c.add(hand);
   const light = new THREE.PointLight(COL.gold, 0, 1.6);
   c.add(light);
-  c.userData = {hand, light, held:null, near:null};
+  c.userData = {hand, light, held:null, near:null, inputSource:null};
   rig.add(c);
   controllers.push(c);
 }
 
-// ---------- desktop fallback ----------
+// ---------- input: desktop + touch ----------
 const keys = {};
-addEventListener('keydown', e=>keys[e.code]=true);
+addEventListener('keydown', e=>{
+  keys[e.code]=true;
+  if(e.code==='KeyE' && state.started && !renderer.xr.isPresenting) toggleInteractDesktop();
+});
 addEventListener('keyup',   e=>keys[e.code]=false);
-let yaw = 0, pitch = 0, pointerLocked = false;
-renderer.domElement.addEventListener('dblclick', ()=>renderer.domElement.requestPointerLock());
-document.addEventListener('pointerlockchange', ()=>{ pointerLocked = document.pointerLockElement===renderer.domElement; });
+let yaw = 0, pitch = 0, pointerLocked = false, isTouch = false;
+renderer.domElement.addEventListener('pointerdown', e=>{
+  if(e.pointerType==='touch'){ isTouch = true; document.body.classList.add('touch'); }
+});
+renderer.domElement.addEventListener('click', ()=>{
+  if(renderer.xr.isPresenting || !state.started || isTouch) return;
+  if(!pointerLocked){ renderer.domElement.requestPointerLock(); return; }
+  toggleInteractDesktop();
+});
+document.addEventListener('pointerlockchange', ()=>{
+  pointerLocked = document.pointerLockElement===renderer.domElement;
+});
 addEventListener('mousemove', e=>{
   if(!pointerLocked) return;
   yaw   -= e.movementX*0.0022;
@@ -274,17 +385,67 @@ addEventListener('mousemove', e=>{
   pitch = Math.max(-1.2, Math.min(1.2, pitch));
 });
 let desktopHeld = null;
-renderer.domElement.addEventListener('click', ()=>{
-  if(renderer.xr.isPresenting) return;
-  if(desktopHeld){ releaseDesktop(); } else { grabDesktop(); }
-});
+function toggleInteractDesktop(){
+  if(desktopHeld) releaseDesktop(); else grabDesktop();
+}
+
+// touch: left half = move stick, right half = look, quick tap right = interact
+const touchState = {moveId:null, lookId:null, lookX:0, lookY:0, moveOX:0, moveOY:0, mx:0, mz:0, tapT:0, tapX:0, tapY:0, tapMoved:false};
+const stickEl = document.getElementById('stick');
+renderer.domElement.addEventListener('touchstart', e=>{
+  isTouch = true; document.body.classList.add('touch');
+  for(const t of e.changedTouches){
+    if(t.clientX < innerWidth/2 && touchState.moveId===null){
+      touchState.moveId = t.identifier;
+      touchState.moveOX = t.clientX; touchState.moveOY = t.clientY;
+      stickEl.style.left = (t.clientX-52)+'px'; stickEl.style.top = (t.clientY-52)+'px'; stickEl.style.bottom = 'auto';
+    } else if(touchState.lookId===null){
+      touchState.lookId = t.identifier;
+      touchState.lookX = t.clientX; touchState.lookY = t.clientY;
+      touchState.tapT = performance.now(); touchState.tapX = t.clientX; touchState.tapY = t.clientY; touchState.tapMoved = false;
+    }
+  }
+  e.preventDefault();
+}, {passive:false});
+renderer.domElement.addEventListener('touchmove', e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===touchState.moveId){
+      const dx = (t.clientX-touchState.moveOX)/46, dy = (t.clientY-touchState.moveOY)/46;
+      touchState.mx = Math.max(-1, Math.min(1, dx));
+      touchState.mz = Math.max(-1, Math.min(1, dy));
+      stickEl.querySelector('.nub').style.transform = 'translate('+(touchState.mx*30)+'px,'+(touchState.mz*30)+'px)';
+    } else if(t.identifier===touchState.lookId){
+      yaw   -= (t.clientX-touchState.lookX)*0.0042;
+      pitch -= (t.clientY-touchState.lookY)*0.0042;
+      pitch = Math.max(-1.2, Math.min(1.2, pitch));
+      if(Math.abs(t.clientX-touchState.tapX)+Math.abs(t.clientY-touchState.tapY) > 14) touchState.tapMoved = true;
+      touchState.lookX = t.clientX; touchState.lookY = t.clientY;
+    }
+  }
+  e.preventDefault();
+}, {passive:false});
+renderer.domElement.addEventListener('touchend', e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===touchState.moveId){
+      touchState.moveId = null; touchState.mx = 0; touchState.mz = 0;
+      stickEl.querySelector('.nub').style.transform = '';
+      stickEl.style.left = '34px'; stickEl.style.top = 'auto'; stickEl.style.bottom = '34px';
+    } else if(t.identifier===touchState.lookId){
+      if(!touchState.tapMoved && performance.now()-touchState.tapT < 260 && state.started && !renderer.xr.isPresenting){
+        toggleInteractDesktop();
+      }
+      touchState.lookId = null;
+    }
+  }
+  e.preventDefault();
+}, {passive:false});
 
 // ---------- room builders ----------
-// Each room: group of blue wireframe furniture + 5 props with sockets.
 const ROOM_DEFS = [
   {
     name: 'THE LIVING ROOM',
     tableau: 'sofa',
+    memory: 'TWO PEOPLE, ONE COUCH, NOWHERE TO BE',
     shell: buildLivingRoom,
     props: [
       {id:'mug',    label:'MUG',     socket:[ 0.00, 0.46, -0.55], make:makeMug},
@@ -297,6 +458,7 @@ const ROOM_DEFS = [
   {
     name: 'THE KITCHEN',
     tableau: 'dance',
+    memory: 'A SLOW DANCE BETWEEN THE COUNTERS',
     shell: buildKitchen,
     props: [
       {id:'plate', label:'PLATE',  socket:[ 0.00, 0.76, -1.10], make:makePlate},
@@ -309,6 +471,7 @@ const ROOM_DEFS = [
   {
     name: 'THE BEDROOM',
     tableau: 'read',
+    memory: 'ONE MORE CHAPTER BEFORE THE LIGHTS',
     shell: buildBedroom,
     props: [
       {id:'pillow', label:'PILLOW', socket:[-0.45, 0.50, -1.55], make:makePillow},
@@ -322,13 +485,19 @@ const ROOM_DEFS = [
 
 // room shells ---------------------------------------------------------------
 function roomShellBase(g){
-  // back wall with baseboard lines, side hints
-  const back = edge(new THREE.PlaneGeometry(4.4, 2.6), COL.room, 0.40, 0, 1.3, -2.1);
+  const back = edge(new THREE.PlaneGeometry(4.4, 2.6, 6, 4), COL.room, 0.40, 0, 1.3, -2.1);
   g.add(back);
-  const left = edge(new THREE.PlaneGeometry(4.4, 2.6), COL.room2, 0.22, -2.2, 1.3, 0.1);
+  const left = edge(new THREE.PlaneGeometry(4.4, 2.6, 6, 4), COL.room2, 0.20, -2.2, 1.3, 0.1);
   left.rotation.y = Math.PI/2; g.add(left);
-  const right = edge(new THREE.PlaneGeometry(4.4, 2.6), COL.room2, 0.22, 2.2, 1.3, 0.1);
+  const right = edge(new THREE.PlaneGeometry(4.4, 2.6, 6, 4), COL.room2, 0.20, 2.2, 1.3, 0.1);
   right.rotation.y = -Math.PI/2; g.add(right);
+  // baseboards
+  g.add(edge(new THREE.BoxGeometry(4.4, 0.06, 0.02), COL.room, 0.5, 0, 0.03, -2.08));
+  g.add(edge(new THREE.BoxGeometry(0.02, 0.06, 4.4), COL.room2, 0.35, -2.18, 0.03, 0.1));
+  g.add(edge(new THREE.BoxGeometry(0.02, 0.06, 4.4), COL.room2, 0.35, 2.18, 0.03, 0.1));
+  // ceiling hint
+  const ceil = edge(new THREE.PlaneGeometry(4.4, 4.4, 4, 4), COL.room2, 0.07, 0, 2.62, 0.1);
+  ceil.rotation.x = Math.PI/2; g.add(ceil);
 }
 function buildLivingRoom(g){
   roomShellBase(g);
@@ -342,14 +511,19 @@ function buildLivingRoom(g){
   [[-0.4,-0.2],[0.4,-0.2],[-0.4,0.2],[0.4,0.2]].forEach(p=>{
     g.add(edge(new THREE.BoxGeometry(0.04,0.42,0.04), COL.room, 0.5, p[0], 0.21, -0.55+p[1]));
   });
-  // bookshelf
+  // bookshelf with shelves
   g.add(edge(new THREE.BoxGeometry(0.8,1.6,0.3, 3,6,1), COL.room, 0.5, -1.5, 0.8, -1.45));
+  [0.4, 0.8, 1.2].forEach(y=>{
+    g.add(edge(new THREE.BoxGeometry(0.76,0.02,0.26), COL.room, 0.4, -1.5, y, -1.45));
+  });
   // window
-  const win = edge(new THREE.PlaneGeometry(1.0,1.1, 3,3), COL.room2, 0.5, 0.9, 1.55, -2.08);
-  g.add(win);
+  g.add(edge(new THREE.PlaneGeometry(1.0,1.1, 3,3), COL.room2, 0.5, 0.9, 1.55, -2.08));
+  g.add(edge(new THREE.BoxGeometry(1.1,0.04,0.06), COL.room2, 0.4, 0.9, 0.98, -2.06));
   // floor lamp
   g.add(edge(new THREE.CylinderGeometry(0.02,0.02,1.4, 6,4), COL.room, 0.5, 1.55, 0.7, -1.8));
   g.add(edge(new THREE.ConeGeometry(0.16,0.22, 10,3, true), COL.room, 0.6, 1.55, 1.48, -1.8));
+  // tv outline on wall
+  g.add(edge(new THREE.BoxGeometry(0.9,0.5,0.03, 3,2,1), COL.room2, 0.30, -0.35, 1.5, -2.07));
   // rug
   const rug = edge(new THREE.CircleGeometry(1.0, 28), COL.room2, 0.16, 0, 0.015, -0.7);
   rug.rotation.x = -Math.PI/2; g.add(rug);
@@ -359,8 +533,12 @@ function buildKitchen(g){
   // counter run along back
   g.add(edge(new THREE.BoxGeometry(3.4,0.9,0.6, 10,3,2), COL.room, 0.55, 0, 0.45, -1.6));
   // stove square
-  g.add(edge(new THREE.PlaneGeometry(0.6,0.5, 3,3), COL.mag, 0.4, -1.2, 0.905, -1.6));
-  g.children[g.children.length-1].rotation.x = -Math.PI/2;
+  const stove = edge(new THREE.PlaneGeometry(0.6,0.5, 3,3), COL.mag, 0.4, -1.2, 0.905, -1.6);
+  stove.rotation.x = -Math.PI/2; g.add(stove);
+  // sink
+  const sink = edge(new THREE.PlaneGeometry(0.5,0.4, 2,2), COL.room2, 0.35, 1.1, 0.905, -1.6);
+  sink.rotation.x = -Math.PI/2; g.add(sink);
+  g.add(edge(new THREE.TorusGeometry(0.08,0.008,6,16,Math.PI), COL.room2, 0.5, 1.1, 1.05, -1.85));
   // table + 2 chairs
   g.add(edge(new THREE.CylinderGeometry(0.55,0.55,0.04, 14,1), COL.room, 0.5, 0, 0.74, -1.0));
   g.add(edge(new THREE.CylinderGeometry(0.04,0.06,0.72, 6,3), COL.room, 0.5, 0, 0.37, -1.0));
@@ -378,6 +556,7 @@ function buildKitchen(g){
   });
   // fridge
   g.add(edge(new THREE.BoxGeometry(0.8,1.8,0.7, 3,6,3), COL.room, 0.5, 1.75, 0.9, -1.55));
+  g.add(edge(new THREE.BoxGeometry(0.02,0.4,0.04), COL.room, 0.6, 1.42, 1.1, -1.2));
 }
 function buildBedroom(g){
   roomShellBase(g);
@@ -387,10 +566,14 @@ function buildBedroom(g){
   // nightstand + dresser
   g.add(edge(new THREE.BoxGeometry(0.5,0.55,0.45, 2,2,2), COL.room, 0.5, 1.05, 0.28, -1.6));
   g.add(edge(new THREE.BoxGeometry(1.1,0.8,0.5, 4,3,2), COL.room, 0.5, -1.05, 0.4, -1.8));
+  [-0.3, 0.05, 0.4].forEach(y=>{
+    g.add(edge(new THREE.BoxGeometry(0.9,0.015,0.02), COL.room, 0.35, -1.05, 0.25+y+0.2, -1.53));
+  });
   // window with moon
   g.add(edge(new THREE.PlaneGeometry(1.0,1.2, 3,3), COL.room2, 0.5, 0.7, 1.6, -2.08));
   const moon = wmesh(new THREE.CircleGeometry(0.14, 16), COL.gold, 0.7, 0.7, 1.75, -2.07);
   g.add(moon);
+  const mglow = glow(COL.gold, 0.8, 0.35); mglow.position.set(0.7, 1.75, -2.05); g.add(mglow);
   // rug
   const rug = edge(new THREE.CircleGeometry(0.8, 24), COL.room2, 0.16, 0.3, 0.015, -0.4);
   rug.rotation.x = -Math.PI/2; g.add(rug);
@@ -434,10 +617,10 @@ function makePillow(){ const g=new THREE.Group();
   g.add(wmesh(new THREE.SphereGeometry(0.16, 9,7), COL.gold, 0.9, 0,0.08,0));
   g.children[0].scale.set(1.4,0.5,0.9); return g; }
 function makeTeddy(){ const g=new THREE.Group();
-  g.add(wmesh(new THREE.SphereGeometry(0.07,8,6), COL.gold, 0.9, 0,0.16,0));           // head
-  g.add(wmesh(new THREE.SphereGeometry(0.09,8,6), COL.gold, 0.9, 0,0.06,0));           // body
-  [[-0.05,0.21],[0.05,0.21]].forEach(p=>g.add(wmesh(new THREE.SphereGeometry(0.025,6,5), COL.gold, 0.9, p[0],p[1],0))); // ears
-  [[-0.09,0.08],[0.09,0.08]].forEach(p=>g.add(wmesh(new THREE.SphereGeometry(0.03,6,5), COL.gold, 0.9, p[0],p[1],0)));  // arms
+  g.add(wmesh(new THREE.SphereGeometry(0.07,8,6), COL.gold, 0.9, 0,0.16,0));
+  g.add(wmesh(new THREE.SphereGeometry(0.09,8,6), COL.gold, 0.9, 0,0.06,0));
+  [[-0.05,0.21],[0.05,0.21]].forEach(p=>g.add(wmesh(new THREE.SphereGeometry(0.025,6,5), COL.gold, 0.9, p[0],p[1],0)));
+  [[-0.09,0.08],[0.09,0.08]].forEach(p=>g.add(wmesh(new THREE.SphereGeometry(0.03,6,5), COL.gold, 0.9, p[0],p[1],0)));
   return g; }
 function makeLamp(){ const g=new THREE.Group();
   g.add(wmesh(new THREE.CylinderGeometry(0.05,0.07,0.02, 10,1), COL.gold, 0.9, 0,0.01,0));
@@ -512,9 +695,11 @@ function spawnTableau(kind, g){
       parent.userData.head.rotation.x = 0.35;
     };
   }
-  // figures fade in
+  // each figure gets a soft halo + figures fade in
   figs.forEach(f=>{
-    f.traverse(o=>{ if(o.material){ o.userData.targetOp = o.material.opacity; o.material.opacity = 0; } });
+    const halo = glow(f===figs[0]?COL.gold:COL.pink, 1.6, 0.0);
+    halo.position.set(0, 1.1, 0); f.add(halo); f.userData.halo = halo;
+    f.traverse(o=>{ if(o.material && !o.isSprite){ o.userData.targetOp = o.material.opacity; o.material.opacity = 0; } });
   });
   g.userData.fadeIn = 0;
   return figs;
@@ -523,7 +708,8 @@ function spawnTableau(kind, g){
 // ---------- game state ----------
 const state = {
   started:false, roomIndex:0, placed:0, t0:0, done:false,
-  room:null, grabbables:[], sockets:[], tableauGroup:null, hud:null, hudRoom:null
+  room:null, grabbables:[], sockets:[], tableauGroup:null, worldHud:null,
+  finaleGroups:[]
 };
 
 function clearRoom(){
@@ -531,23 +717,76 @@ function clearRoom(){
   state.grabbables = [];
   state.sockets = [];
   state.tableauGroup = null;
-  if(state.hud){ scene.remove(state.hud); state.hud=null; }
-  if(state.hudRoom){ scene.remove(state.hudRoom); state.hudRoom=null; }
+  state.worldHud = null;
 }
 
+// ---------- HUD: DOM ----------
+const elTimer = document.getElementById('timer');
+const elRoomNum = document.querySelector('#roomtag .num');
+const elRoomName = document.querySelector('#roomtag .name');
+const elPips = Array.from(document.querySelectorAll('#pips span'));
+const elBanner = document.getElementById('banner');
+const elBannerBig = document.querySelector('#banner .big');
+const elBannerSmall = document.querySelector('#banner .small');
+const elCross = document.getElementById('cross');
+let bannerTimer = null;
+
+function showBanner(big, small, holdMs){
+  elBannerBig.innerHTML = big;
+  elBannerSmall.textContent = small||'';
+  elBanner.style.opacity = 1;
+  if(bannerTimer) clearTimeout(bannerTimer);
+  if(holdMs){ bannerTimer = setTimeout(()=>{ elBanner.style.opacity = 0; }, holdMs); }
+}
+function fmtTime(ms){
+  const t = Math.max(0, Math.round(ms/1000));
+  return Math.floor(t/60) + ':' + (''+(t%60)).padStart(2,'0');
+}
+function updateHud(){
+  elPips.forEach((p,i)=>p.classList.toggle('on', i < state.placed));
+  if(state.worldHud){
+    state.worldHud.pips.forEach((p,i)=>{
+      p.material.opacity = i < state.placed ? 0.95 : 0.18;
+      p.material.color.setHex(i < state.placed ? COL.gold : 0x4b5563);
+    });
+  }
+}
+
+// ---------- HUD: in-world (VR) ----------
+function buildWorldHud(room, def, index){
+  const g = new THREE.Group();
+  const name = textSprite(def.name, '#22d3ee', 40);
+  name.position.set(0, 2.32, -1.9);
+  g.add(name);
+  const num = textSprite('ROOM '+(index+1)+' / '+ROOM_DEFS.length, '#5b6470', 26, 400);
+  num.position.set(0, 2.12, -1.9);
+  g.add(num);
+  const pips = [];
+  for(let i=0;i<def.props.length;i++){
+    const pip = new THREE.Mesh(new THREE.PlaneGeometry(0.035,0.035),
+      new THREE.MeshBasicMaterial({color:0x4b5563, transparent:true, opacity:0.18, blending:THREE.AdditiveBlending, depthWrite:false}));
+    pip.position.set((i-(def.props.length-1)/2)*0.09, 1.98, -1.9);
+    pip.rotation.z = Math.PI/4;
+    g.add(pip); pips.push(pip);
+  }
+  room.add(g);
+  state.worldHud = {group:g, pips};
+}
+
+// ---------- room construction ----------
 function buildRoom(i){
   clearRoom();
   const def = ROOM_DEFS[i];
   const room = new THREE.Group();
   def.shell(room);
-  // props + sockets
   def.props.forEach((p, idx)=>{
     const obj = p.make();
-    // scatter: arc in front of player, floating slightly
     const ang = -0.9 + idx*(1.8/(def.props.length-1));
     const r = 1.15 + (idx%2)*0.35;
     obj.position.set(Math.sin(ang)*r, 1.05 + (idx%3)*0.12, -Math.cos(ang)*r - 0.4);
     obj.userData = {id:p.id, label:p.label, placed:false, held:false, spin:Math.random()*6.28, home:obj.position.clone()};
+    const halo = glow(COL.gold, 0.55, 0.28);
+    obj.add(halo); obj.userData.halo = halo;
     room.add(obj);
     state.grabbables.push(obj);
 
@@ -555,33 +794,23 @@ function buildRoom(i){
     sock.position.fromArray(p.socket);
     sock.traverse(o=>{ if(o.material){ o.material = wmat(COL.mag, 0.22); o.userData.baseOp = 0.22; } });
     sock.userData = {id:p.id, isSocket:true};
+    const sglow = glow(COL.mag, 0.5, 0.2);
+    sock.add(sglow);
     room.add(sock);
     state.sockets.push(sock);
   });
-  // room name + progress HUD, floating near back wall
-  const name = textSprite(def.name, '#22d3ee', 40);
-  name.position.set(0, 2.35, -1.9);
-  room.add(name);
-  state.hudRoom = name;
+  buildWorldHud(room, def, i);
   scene.add(room);
   state.room = room;
   state.placed = 0;
   padRoot(ROOM_ROOTS[i]);
+  elRoomNum.textContent = 'ROOM '+(i+1)+' / '+ROOM_DEFS.length;
+  elRoomName.textContent = def.name;
   updateHud();
 }
 
-function updateHud(){
-  if(state.hud) scene.remove(state.hud);
-  const txt = state.done ? 'ALL MEMORIES RESTORED' : ('RESTORED ' + state.placed + ' / 5');
-  const hud = textSprite(txt, state.done?'#fbbf24':'#8b93a0', 34);
-  hud.position.set(0, 2.05, -1.9);
-  scene.add(hud);
-  state.hud = hud;
-}
-
-// ---------- grab / release ----------
+// ---------- grab / release / place ----------
 function worldPosOf(o){ const v = new THREE.Vector3(); o.getWorldPosition(v); return v; }
-
 function nearestGrabbable(pos, maxD){
   let best=null, bd=maxD;
   state.grabbables.forEach(o=>{
@@ -591,12 +820,11 @@ function nearestGrabbable(pos, maxD){
   });
   return best;
 }
-function socketFor(obj){
-  return state.sockets.find(s=>s.userData.id===obj.userData.id);
-}
+function socketFor(obj){ return state.sockets.find(s=>s.userData.id===obj.userData.id); }
 
 function onGrab(c){
-  if(state.done) { restart(); return; }
+  if(state.done){ restart(); return; }
+  if(transitioning) return;
   const near = nearestGrabbable(worldPosOf(c), 0.45);
   if(!near){ sndFail(); return; }
   near.userData.held = true;
@@ -616,18 +844,24 @@ function onRelease(c){
   tryPlace(held, c);
 }
 
-function grabDesktop(){
-  if(state.done){ restart(); return; }
+function aimTarget(){
   const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
   const origin = worldPosOf(camera);
-  let best=null, bd=2.6;
+  let best=null, bd=2.6, bdot=0.86;
   state.grabbables.forEach(o=>{
     if(o.userData.placed || o.userData.held) return;
     const to = worldPosOf(o).sub(origin);
     const d = to.length();
     if(d>bd) return;
-    if(to.normalize().dot(dir) > 0.86 && d<bd){ bd=d; best=o; }
+    const dot = to.normalize().dot(dir);
+    if(dot > bdot){ bdot=dot; bd=d; best=o; }
   });
+  return best;
+}
+function grabDesktop(){
+  if(state.done){ restart(); return; }
+  if(transitioning) return;
+  const best = aimTarget();
   if(!best){ sndFail(); return; }
   best.userData.held = true;
   desktopHeld = best;
@@ -651,20 +885,23 @@ function tryPlace(held, c){
     held.position.copy(sock.position);
     held.rotation.set(0,0,0);
     held.userData.placed = true;
-    held.traverse(o=>{ if(o.material){ o.material = wmat(COL.goldHot, 1.0); o.userData.baseOp = 1.0; } });
+    held.traverse(o=>{ if(o.material && !o.isSprite){ o.material = wmat(COL.goldHot, 1.0); o.userData.baseOp = 1.0; } });
+    if(held.userData.halo){ held.userData.halo.material.color.setHex(COL.goldHot); held.userData.halo.material.opacity = 0.5; }
     sock.visible = false;
     burst(worldPosOf(sock));
     state.placed++;
     sndPlace();
     updateHud();
     if(c) pulse(c, 1.0, 120);
+    const left = ROOM_DEFS[state.roomIndex].props.length - state.placed;
+    setHint(left>0 ? (left + ' MORE TO FIND HOME') : '');
     if(state.placed === ROOM_DEFS[state.roomIndex].props.length){
       roomComplete();
     }
   }
 }
 
-// placement bursts
+// ---------- placement bursts + memory motes ----------
 const bursts = [];
 function burst(pos){
   const r = wmesh(new THREE.TorusGeometry(0.13, 0.007, 6, 48), COL.goldHot, 0.9);
@@ -681,8 +918,33 @@ function tickBursts(dt){
     if(b.t>0.7){ scene.remove(b.m); bursts.splice(i,1); }
   }
 }
+const motes = [];
+function spawnMotes(center){
+  const n = 90, pos = new Float32Array(n*3), vel = [];
+  for(let i=0;i<n;i++){
+    pos[i*3]   = center.x + (Math.random()-0.5)*1.6;
+    pos[i*3+1] = center.y + Math.random()*0.4;
+    pos[i*3+2] = center.z + (Math.random()-0.5)*1.6;
+    vel.push(0.12 + Math.random()*0.25);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({color:COL.gold, size:0.02, transparent:true, opacity:0.85, blending:THREE.AdditiveBlending, depthWrite:false}));
+  scene.add(pts);
+  motes.push({pts, vel, t:0});
+}
+function tickMotes(dt){
+  for(let i=motes.length-1;i>=0;i--){
+    const m = motes[i]; m.t += dt;
+    const a = m.pts.geometry.attributes.position;
+    for(let j=0;j<m.vel.length;j++) a.array[j*3+1] += m.vel[j]*dt;
+    a.needsUpdate = true;
+    m.pts.material.opacity = Math.max(0, 0.85*(1 - m.t/6));
+    if(m.t>6){ scene.remove(m.pts); m.pts.geometry.dispose(); motes.splice(i,1); }
+  }
+}
 
-// haptics
+// ---------- haptics ----------
 function pulse(c, amp, ms){
   try{
     const src = c.userData.inputSource;
@@ -694,29 +956,43 @@ function pulse(c, amp, ms){
 renderer.xr.addEventListener('sessionstart', ()=>{
   const session = renderer.xr.getSession();
   session.addEventListener('inputsourceschange', ()=>{
-    controllers.forEach(c=>{
-      c.userData.inputSource = null;
-      for(const src of session.inputSources){
-        if(src.handedness==='left' && c===controllers[0]) c.userData.inputSource = src;
-        if(src.handedness==='right' && c===controllers[1]) c.userData.inputSource = src;
-      }
-    });
+    controllers.forEach(c=>{ c.userData.inputSource = null; });
+    for(const src of session.inputSources){
+      if(src.handedness==='left' && controllers[0]) controllers[0].userData.inputSource = src;
+      if(src.handedness==='right' && controllers[1]) controllers[1].userData.inputSource = src;
+    }
   });
 });
 
 // ---------- room complete / progression ----------
 let transitioning = false;
+function fadeTableauStep(g){
+  if(g.userData.fadeIn<1){
+    g.userData.fadeIn = Math.min(1, g.userData.fadeIn + 0.008);
+    const k = g.userData.fadeIn;
+    g.traverse(o=>{
+      if(o.material && !o.isSprite && o.userData.targetOp!=null) o.material.opacity = o.userData.targetOp * k;
+    });
+    (g.userData.figs||[]).forEach(f=>{ if(f.userData.halo) f.userData.halo.material.opacity = 0.30*k; });
+  }
+}
 function roomComplete(){
   const def = ROOM_DEFS[state.roomIndex];
   sndRoom();
   const tg = new THREE.Group();
   state.room.add(tg);
   state.tableauGroup = tg;
-  spawnTableau(def.tableau, tg);
-  // flare the room
-  state.room.traverse(o=>{
-    if(o.material && !o.isSprite){ o.userData.flare = 1; }
-  });
+  tg.userData.figs = spawnTableau(def.tableau, tg);
+  spawnMotes(new THREE.Vector3(0, 0.4, -1.2));
+  showBanner(def.name.replace('THE ','THE <b>')+'</b> REMEMBERS', def.memory, 5600);
+  // in-world banner for headset players
+  const wb = textSprite(def.name + ' REMEMBERS', '#fbbf24', 40);
+  wb.position.set(0, 1.62, -1.7);
+  state.room.add(wb);
+  const wm = textSprite(def.memory, '#8b93a0', 24, 400);
+  wm.position.set(0, 1.44, -1.7);
+  state.room.add(wm);
+  state.room.traverse(o=>{ if(o.material && !o.isSprite){ o.userData.flare = 1; } });
   transitioning = true;
   setTimeout(()=>{
     const fade = document.getElementById('fade');
@@ -725,10 +1001,10 @@ function roomComplete(){
       if(state.roomIndex < ROOM_DEFS.length-1){
         state.roomIndex++;
         buildRoom(state.roomIndex);
-        // recentre player
         rig.position.set(0,0,0);
         fade.style.opacity = 0;
         transitioning = false;
+        setHint(roomHint(), 6000);
       } else {
         finishGame();
         fade.style.opacity = 0;
@@ -741,90 +1017,107 @@ function roomComplete(){
 function finishGame(){
   state.done = true;
   clearRoom();
-  // all three tableaus around the player
   const kinds = ['sofa','dance','read'];
   kinds.forEach((k,i)=>{
     const g = new THREE.Group();
     const ang = (i/3)*Math.PI*2 + Math.PI/6;
     g.position.set(Math.sin(ang)*2.6, 0, -Math.cos(ang)*2.6);
     g.rotation.y = Math.atan2(-g.position.x, -g.position.z);
-    spawnTableau(k, g);
+    g.userData.figs = spawnTableau(k, g);
     scene.add(g);
+    state.finaleGroups.push(g);
   });
-  const t = Math.round((performance.now()-state.t0)/1000);
-  const mm = Math.floor(t/60), ss = (''+(t%60)).padStart(2,'0');
-  const hud = textSprite('EVERY ROOM REMEMBERS YOU  -  '+mm+':'+ss, '#fbbf24', 40);
+  const ms = performance.now()-state.t0;
+  const hud = textSprite('EVERY ROOM REMEMBERS YOU  -  '+fmtTime(ms), '#fbbf24', 40);
   hud.position.set(0, 2.2, -2.2);
-  scene.add(hud); state.hud = hud;
-  const sub = textSprite('PULL THE TRIGGER TO WANDER AGAIN', '#8b93a0', 30);
-  sub.position.set(0, 1.85, -2.2);
+  scene.add(hud);
+  const sub = textSprite('PULL THE TRIGGER TO WANDER AGAIN', '#8b93a0', 30, 400);
+  sub.position.set(0, 1.9, -2.2);
   scene.add(sub);
+  state.finaleGroups.push(hud, sub);
   sndFinal();
+  showBanner('EVERY ROOM REMEMBERS <b>YOU</b>', 'ALL THREE MEMORIES RESTORED', 5200);
+  document.getElementById('endTime').textContent = fmtTime(ms);
+  if(!renderer.xr.isPresenting){
+    setTimeout(()=>{ document.getElementById('end').classList.remove('hidden'); }, 5400);
+  }
 }
 
 function restart(){
   state.done = false;
-  // clear finale groups
-  scene.children.slice().forEach(o=>{
-    if(o.userData && o.userData.animate) scene.remove(o);
-  });
-  // remove non-room sprites added at finale
-  if(state.hud){ scene.remove(state.hud); state.hud=null; }
-  scene.traverse(o=>{});
+  state.finaleGroups.forEach(g=>scene.remove(g));
+  state.finaleGroups = [];
+  document.getElementById('end').classList.add('hidden');
   state.roomIndex = 0;
   state.t0 = performance.now();
+  rig.position.set(0,0,0);
   buildRoom(0);
+  setHint(roomHint(), 6000);
 }
 
 // ---------- start ----------
-document.getElementById('startBtn').addEventListener('click', ()=>{
+function roomHint(){
+  if(isTouch) return 'DRAG LEFT SIDE TO MOVE - RIGHT SIDE TO LOOK\nTAP TO HOLD AND PLACE';
+  return 'WASD TO MOVE - CLICK TO LOOK\nCLICK OR E TO HOLD AND PLACE';
+}
+const hint = document.getElementById('hint');
+let hintTimer = null;
+function setHint(h, holdMs){
+  hint.textContent = h;
+  hint.style.opacity = h?1:0;
+  if(hintTimer) clearTimeout(hintTimer);
+  if(h && holdMs){ hintTimer = setTimeout(()=>{ hint.style.opacity = 0; }, holdMs); }
+}
+function startGame(){
   audioInit();
+  sndUi();
   document.getElementById('title').classList.add('hidden');
+  document.getElementById('end').classList.add('hidden');
   if(!state.started){
     state.started = true;
     state.t0 = performance.now();
     buildRoom(0);
+    setHint(roomHint(), 9000);
   }
-});
-const hint = document.getElementById('hint');
-function setHint(h){ hint.textContent = h; hint.style.opacity = h?1:0; }
+}
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('againBtn').addEventListener('click', ()=>{ sndUi(); restart(); });
 
 // ---------- per-frame ----------
 const clock = new THREE.Clock();
-let snapReady = true;
+let snapReady = true, timerAcc = 0;
 
 renderer.setAnimationLoop(()=>{
   const dt = Math.min(clock.getDelta(), 0.05);
   const t = clock.elapsedTime;
 
+  // hands only exist in the headset
+  controllers.forEach(c=>{ c.visible = renderer.xr.isPresenting; });
+
   if(state.started && !state.done){
-    // idle motion for grabbables + proximity glow
     controllers.forEach(c=>{ c.userData.near = null; });
     state.grabbables.forEach(o=>{
       if(o.userData.placed || o.userData.held) return;
       o.position.y = o.userData.home.y + Math.sin(t*1.4 + o.userData.spin)*0.03;
       o.rotation.y = o.userData.spin + t*0.4;
-      // nearest controller distance
       let k = 0;
       controllers.forEach(c=>{
         const d = worldPosOf(o).distanceTo(worldPosOf(c));
         k = Math.max(k, Math.max(0, 1 - d/0.6));
         if(d<0.45) c.userData.near = o;
       });
-      // desktop proximity via camera
       if(!renderer.xr.isPresenting){
         const d = worldPosOf(o).distanceTo(worldPosOf(camera));
         k = Math.max(k, Math.max(0, 1 - d/1.4)*0.7);
       }
-      o.traverse(m=>{ if(m.material){ m.material.opacity = m.userData.baseOp==null?0.9:m.userData.baseOp*(0.55+0.45*k)+k*0.4; } });
+      o.traverse(m=>{ if(m.material && !m.isSprite){ m.material.opacity = m.userData.baseOp==null?0.9:m.userData.baseOp*(0.55+0.45*k)+k*0.4; } });
+      if(o.userData.halo) o.userData.halo.material.opacity = 0.22 + k*0.35;
     });
-    // sockets pulse
     state.sockets.forEach(s=>{
       if(!s.visible) return;
       const k = 0.5+0.5*Math.sin(t*2.2 + s.position.x*3);
-      s.traverse(m=>{ if(m.material) m.material.opacity = 0.08 + k*0.18; });
+      s.traverse(m=>{ if(m.material && !m.isSprite) m.material.opacity = 0.08 + k*0.18; });
     });
-    // hand glow + light
     controllers.forEach(c=>{
       const held = !!c.userData.held;
       const near = !!c.userData.near;
@@ -832,40 +1125,45 @@ renderer.setAnimationLoop(()=>{
       c.userData.light.intensity = held?0.8:(near?0.4:0.06);
     });
     tickBursts(dt);
+    tickMotes(dt);
     dust.rotation.y += dt*0.008;
-    // tableau fade-in + animate
     if(state.tableauGroup){
-      const tg = state.tableauGroup;
-      if(tg.userData.fadeIn<1){
-        tg.userData.fadeIn = Math.min(1, tg.userData.fadeIn + 0.008);
-        tg.traverse(o=>{
-          if(o.material && o.userData.targetOp!=null) o.material.opacity = o.userData.targetOp * tg.userData.fadeIn;
-        });
-      }
-      if(tg.userData.animate) tg.userData.animate(t);
+      fadeTableauStep(state.tableauGroup);
+      if(state.tableauGroup.userData.animate) state.tableauGroup.userData.animate(t);
     }
-    // room flare decay after completion
     if(state.room){
       state.room.traverse(o=>{
-        if(o.userData && o.userData.flare && o.material && o.userData.baseOp!=null){
+        if(o.userData && o.userData.flare && o.material && !o.isSprite && o.userData.baseOp!=null){
           o.userData.flare = Math.max(0, o.userData.flare - 0.004);
           o.material.opacity = Math.min(1, o.userData.baseOp + o.userData.flare*0.6);
         }
       });
     }
+    // crosshair reacts to aim
+    if(!renderer.xr.isPresenting){
+      elCross.classList.toggle('hot', !!desktopHeld || !!aimTarget());
+    }
+    // timer
+    timerAcc += dt;
+    if(timerAcc > 0.25){
+      timerAcc = 0;
+      elTimer.textContent = fmtTime(performance.now()-state.t0);
+    }
   }
 
-  // finale tableau animation
   if(state.done){
-    scene.children.forEach(o=>{
-      if(o.userData && o.userData.animate){
-        if(o.userData.fadeIn<1){
-          o.userData.fadeIn = Math.min(1, o.userData.fadeIn + 0.008);
-          o.traverse(m=>{ if(m.material && m.userData.targetOp!=null) m.material.opacity = m.userData.targetOp * o.userData.fadeIn; });
-        }
-        o.userData.animate(t);
+    state.finaleGroups.forEach(g=>{
+      if(g.userData && g.userData.animate){
+        fadeTableauStep(g);
+        g.userData.animate(t);
       }
     });
+    tickBursts(dt);
+    tickMotes(dt);
+    dust.rotation.y += dt*0.004;
+    if(Math.random() < dt*0.25){
+      burst(new THREE.Vector3((Math.random()-0.5)*5, 1.4+Math.random(), -2-Math.random()*2));
+    }
   }
 
   // locomotion: XR thumbsticks
@@ -894,7 +1192,7 @@ renderer.setAnimationLoop(()=>{
       } else if(Math.abs(sx)<0.3) snapReady = true;
     }
   } else if(state.started){
-    // desktop look + WASD
+    // desktop look + WASD / touch stick
     camera.rotation.set(pitch, yaw, 0, 'YXZ');
     rig.rotation.y = 0;
     const sp = keys.ShiftLeft?3.0:1.6;
@@ -904,7 +1202,14 @@ renderer.setAnimationLoop(()=>{
     if(keys.KeyS) rig.position.addScaledVector(f, -sp*dt);
     if(keys.KeyA) rig.position.addScaledVector(r, -sp*dt);
     if(keys.KeyD) rig.position.addScaledVector(r,  sp*dt);
+    if(touchState.mx || touchState.mz){
+      rig.position.addScaledVector(r,  touchState.mx*sp*dt);
+      rig.position.addScaledVector(f, -touchState.mz*sp*dt);
+    }
   }
+  // stay near the house
+  rig.position.x = Math.max(-6, Math.min(6, rig.position.x));
+  rig.position.z = Math.max(-6, Math.min(6, rig.position.z));
 
   // comfort vignette + smooth snap
   if(snapAnim){
@@ -922,9 +1227,22 @@ renderer.setAnimationLoop(()=>{
   renderer.render(scene, camera);
 });
 
-setHint('DOUBLE-CLICK FOR MOUSE LOOK - CLICK TO GRAB AND PLACE');
-setTimeout(()=>setHint(''), 8000);
-
+// ---------- debug / screenshot hooks ----------
+window.__ai = {
+  version: '2.0.0',
+  state,
+  start: startGame,
+  completeRoom(){
+    if(!state.started) startGame();
+    state.grabbables.forEach(o=>{ o.userData.placed = true; o.visible = false; });
+    state.sockets.forEach(s=>{ s.visible = false; });
+    state.placed = ROOM_DEFS[state.roomIndex].props.length;
+    updateHud();
+    roomComplete();
+  },
+  finish(){ if(!state.started) startGame(); finishGame(); },
+  look(y, p){ yaw = y||0; pitch = p||0; }
+};
 </script>
 </body>
 </html>
