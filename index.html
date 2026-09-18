@@ -985,13 +985,15 @@ function roomComplete(){
   tg.userData.figs = spawnTableau(def.tableau, tg);
   spawnMotes(new THREE.Vector3(0, 0.4, -1.2));
   showBanner(def.name.replace('THE ','THE <b>')+'</b> REMEMBERS', def.memory, 5600);
-  // in-world banner for headset players
-  const wb = textSprite(def.name + ' REMEMBERS', '#fbbf24', 40);
-  wb.position.set(0, 1.62, -1.7);
-  state.room.add(wb);
-  const wm = textSprite(def.memory, '#8b93a0', 24, 400);
-  wm.position.set(0, 1.44, -1.7);
-  state.room.add(wm);
+  // in-world banner for headset players (flat players get the DOM banner)
+  if(renderer.xr.isPresenting){
+    const wb = textSprite(def.name + ' REMEMBERS', '#fbbf24', 40);
+    wb.position.set(0, 1.62, -1.7);
+    state.room.add(wb);
+    const wm = textSprite(def.memory, '#8b93a0', 24, 400);
+    wm.position.set(0, 1.44, -1.7);
+    state.room.add(wm);
+  }
   state.room.traverse(o=>{ if(o.material && !o.isSprite){ o.userData.flare = 1; } });
   transitioning = true;
   setTimeout(()=>{
